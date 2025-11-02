@@ -1,14 +1,15 @@
+import { sha256, sha384, sha512 } from '@noble/hashes/sha2.js';
 import {
-    sha3_512,
-    sha3_384,
-    sha3_256,
-    sha3_224,
-    shake128,
-    shake256,
-    cshake128,
-    cshake256,
-} from 'js-sha3';
+    sha3_224 as nobleSha3_224,
+    sha3_256 as nobleSha3_256,
+    sha3_384 as nobleSha3_384,
+    sha3_512 as nobleSha3_512,
+    shake128 as nobleShake128,
+    shake256 as nobleShake256,
+} from '@noble/hashes/sha3.js';
+import { cshake128 as nobleCshake128, cshake256 as nobleCshake256 } from '@noble/hashes/sha3-addons.js';
 
+// Keep public types
 type Sha2 = 256 | 384 | 512;
 
 /**
@@ -20,37 +21,20 @@ type Sha2 = 256 | 384 | 512;
  * @returns A promise that resolves to the hash as a Uint8Array.
  */
 async function sha2Hash(data: Uint8Array, bits: Sha2): Promise<Uint8Array> {
-    const algo = `SHA-${bits}`;
-
-    // Browser path
-    if (typeof crypto !== "undefined" && crypto.subtle?.digest) {
-        const hashBuffer = await crypto.subtle.digest(algo, data);
-        return new Uint8Array(hashBuffer);
+    switch (bits) {
+        case 256:
+            return sha256(data);
+        case 384:
+            return sha384(data);
+        case 512:
+            return sha512(data);
+        default:
+            throw new Error(`Unsupported SHA-2 bit length: ${bits}`);
     }
-
-    // Node.js path
-    // @ts-ignore
-    if (typeof process !== "undefined" && typeof require !== "undefined") {
-        // @ts-ignore
-        const { createHash } = require("crypto");
-        const hash = createHash(`sha${bits}`);
-        hash.update(data);
-        return Uint8Array.from(hash.digest());
-    }
-
-    throw new Error("No SHA-2 implementation available in this environment.");
 }
 
+// SHA3 FIPS variants
 type Sha3 = 224 | 256 | 384 | 512;
-
-function hexToBytes(hex: string): Uint8Array {
-    if (hex.length % 2 !== 0) throw new Error('hex length must be even');
-    const out = new Uint8Array(hex.length / 2);
-    for (let i = 0; i < hex.length; i += 2) {
-        out[i / 2] = parseInt(hex.slice(i, i + 2), 16);
-    }
-    return out;
-}
 
 /**
  * Computes the SHA-3 hash of the given data.
@@ -61,26 +45,21 @@ function hexToBytes(hex: string): Uint8Array {
  * @returns A promise that resolves to the hash as a Uint8Array.
  */
 async function sha3Hash(data: Uint8Array, bits: Sha3): Promise<Uint8Array> {
-    let hex: string;
     switch (bits) {
         case 224:
-            hex = sha3_224(data as any) as unknown as string;
-            break;
+            return nobleSha3_224(data);
         case 256:
-            hex = sha3_256(data as any) as unknown as string;
-            break;
+            return nobleSha3_256(data);
         case 384:
-            hex = sha3_384(data as any) as unknown as string;
-            break;
+            return nobleSha3_384(data);
         case 512:
-            hex = sha3_512(data as any) as unknown as string;
-            break;
+            return nobleSha3_512(data);
         default:
             throw new Error(`Unsupported SHA-3 bit length: ${bits}`);
     }
-    return hexToBytes(hex);
 }
 
+// XOFs
 type Shake = 128 | 256;
 
 /**
@@ -93,20 +72,19 @@ type Shake = 128 | 256;
  * @returns A promise that resolves to the hash as a Uint8Array.
  */
 async function shakeHash(data: Uint8Array, bits: Shake, outputLengthInBits: number): Promise<Uint8Array> {
-    let hex: string;
+    if (outputLengthInBits % 8 !== 0) throw new Error('outputLengthInBits must be a multiple of 8');
+    const dkLen = outputLengthInBits >>> 3; // bytes
     switch (bits) {
         case 128:
-            hex = shake128(data as any, outputLengthInBits) as unknown as string;
-            break;
+            return nobleShake128(data, { dkLen });
         case 256:
-            hex = shake256(data as any, outputLengthInBits) as unknown as string;
-            break;
+            return nobleShake256(data, { dkLen });
         default:
             throw new Error(`Unsupported SHAKE bit length: ${bits}`);
     }
-    return hexToBytes(hex);
 }
 
+// cSHAKE
 type CShake = 128 | 256;
 
 /**
@@ -127,18 +105,24 @@ async function cShakeHash(
     functionName: string,
     customization: string
 ): Promise<Uint8Array> {
-    let hex: string;
+    if (outputLengthInBits % 8 !== 0) throw new Error('outputLengthInBits must be a multiple of 8');
+    const dkLen = outputLengthInBits >>> 3; // bytes
+
+    if (functionName === '' && customization === '') {
+        return shakeHash(data, bits, outputLengthInBits);
+    }
+
+    const opts: any = { dkLen, personalization: customization };
+    if (functionName) opts.name = functionName;
+
     switch (bits) {
         case 128:
-            hex = cshake128(data as any, outputLengthInBits, functionName, customization) as unknown as string;
-            break;
+            return nobleCshake128(data, opts);
         case 256:
-            hex = cshake256(data as any, outputLengthInBits, functionName, customization) as unknown as string;
-            break;
+            return nobleCshake256(data, opts);
         default:
             throw new Error(`Unsupported cSHAKE bit length: ${bits}`);
     }
-    return hexToBytes(hex);
 }
 
 export {
@@ -150,5 +134,4 @@ export {
     sha3Hash,
     shakeHash,
     cShakeHash,
-    cShakeHash as cshakeHash
-}
+};
