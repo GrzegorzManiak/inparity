@@ -52,6 +52,32 @@ type parityVectors struct {
 		Encode []struct{ Bytes, B64 string }
 		Decode []struct{ B64, Bytes string }
 	}
+	Hash struct {
+		Sha2 []struct {
+			Bits int
+			Msg  string
+			Hash string
+		}
+		Sha3 []struct {
+			Bits int
+			Msg  string
+			Hash string
+		}
+		Shake []struct {
+			Bits    int
+			OutBits int
+			Msg     string
+			Hash    string
+		}
+		Cshake []struct {
+			Bits    int
+			OutBits int
+			Fn      string
+			Cust    string
+			Msg     string
+			Hash    string
+		}
+	}
 }
 
 func loadVectors(t *testing.T) parityVectors {
@@ -203,6 +229,46 @@ func TestParity_Coding(t *testing.T) {
 		}
 		if hex.EncodeToString(got) != tc.Bytes {
 			t.Fatalf("decode %s: got %x want %s", tc.B64, got, tc.Bytes)
+		}
+	}
+}
+
+func TestParity_Hash(t *testing.T) {
+	v := loadVectors(t)
+	for _, tc := range v.Hash.Sha2 {
+		got, err := Sha2Hash([]byte(tc.Msg), tc.Bits)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hex.EncodeToString(got) != tc.Hash {
+			t.Fatalf("sha2-%d %q: got %x want %s", tc.Bits, tc.Msg, got, tc.Hash)
+		}
+	}
+	for _, tc := range v.Hash.Sha3 {
+		got, err := Sha3Hash([]byte(tc.Msg), tc.Bits)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hex.EncodeToString(got) != tc.Hash {
+			t.Fatalf("sha3-%d %q: got %x want %s", tc.Bits, tc.Msg, got, tc.Hash)
+		}
+	}
+	for _, tc := range v.Hash.Shake {
+		got, err := ShakeHash([]byte(tc.Msg), tc.Bits, tc.OutBits)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hex.EncodeToString(got) != tc.Hash {
+			t.Fatalf("shake%d out=%d %q: got %x want %s", tc.Bits, tc.OutBits, tc.Msg, got, tc.Hash)
+		}
+	}
+	for _, tc := range v.Hash.Cshake {
+		got, err := CShakeHash([]byte(tc.Msg), tc.Bits, tc.OutBits, tc.Fn, tc.Cust)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hex.EncodeToString(got) != tc.Hash {
+			t.Fatalf("cshake%d out=%d fn=%q cust=%q %q: got %x want %s", tc.Bits, tc.OutBits, tc.Fn, tc.Cust, tc.Msg, got, tc.Hash)
 		}
 	}
 }

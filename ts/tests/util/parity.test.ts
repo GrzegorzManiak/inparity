@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import vectors from '../../../testdata/parity.json';
 import { bytesToBigInt, bigIntToByteArray, intToBytes, concatBytes, framedBytesFromUint8Array, framedBytesFromBigInt, framedBytesFromString } from '../../src/util/bytes';
 import {bigCmp, bigModPos} from "../../src/util/numeric";
-import { urlSafeBase64Encode, urlSafeBase64Decode } from '../../src/util/coding';
+import { encUrlSafe, decUrlSafe } from '../../src/util/coding';
+import { sha2Hash, sha3Hash, shakeHash, cShakeHash } from '../../src/util/hash';
 
 function hex(buf: Uint8Array): string {
     return Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -105,14 +106,47 @@ describe('parity: bytes', () => {
 describe('parity: coding', () => {
     for (const tc of (vectors as any).coding.encode) {
         it(`encode ${tc.bytes}`, () => {
-            const got = urlSafeBase64Encode(unhex(tc.bytes));
+            const got = encUrlSafe(unhex(tc.bytes));
             expect(got).toEqual(tc.b64);
         });
     }
     for (const tc of (vectors as any).coding.decode) {
         it(`decode ${tc.b64}`, () => {
-            const got = urlSafeBase64Decode(tc.b64);
+            const got = decUrlSafe(tc.b64);
             expect(hex(got)).toEqual(tc.bytes);
+        });
+    }
+});
+
+// Hash parity
+
+describe('parity: hash', () => {
+    for (const tc of (vectors as any).hash.sha2) {
+        it(`sha2-${tc.bits} "${tc.msg}"`, async () => {
+            const data = new TextEncoder().encode(tc.msg);
+            const out = await sha2Hash(data, tc.bits);
+            expect(hex(out)).toEqual(tc.hash);
+        });
+    }
+    for (const tc of (vectors as any).hash.sha3) {
+        it(`sha3-${tc.bits} "${tc.msg}"`, async () => {
+            const data = new TextEncoder().encode(tc.msg);
+            const out = await sha3Hash(data, tc.bits);
+            expect(hex(out)).toEqual(tc.hash);
+        });
+    }
+    for (const tc of (vectors as any).hash.shake) {
+        it(`shake${tc.bits} bits=${tc.outBits} "${tc.msg}"`, async () => {
+            const data = new TextEncoder().encode(tc.msg);
+            const out = await shakeHash(data, tc.bits, tc.outBits);
+            expect(hex(out)).toEqual(tc.hash);
+        });
+    }
+    for (const tc of (vectors as any).hash.cshake) {
+        it(`cshake${tc.bits} bits=${tc.outBits} fn="${tc.fn}" cust="${tc.cust}" "${tc.msg}"`, async () => {
+            const data = new TextEncoder().encode(tc.msg);
+            const out = await cShakeHash(data, tc.bits, tc.outBits, tc.fn, tc.cust);
+            expect(hex(out)).toEqual(tc.hash);
         });
     }
 });

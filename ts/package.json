@@ -14,5 +14,8 @@
   "private": false,
   "devDependencies": {
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "js-sha3": "^0.9.3"
   }
 }
