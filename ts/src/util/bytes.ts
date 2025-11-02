@@ -50,7 +50,7 @@ function bigIntToByteArray(value: bigint): Uint8Array {
  *
  * Converts an integer to a Uint8Array of specified byte length.
  *
- * @throws {RangeError} - If the input integer is negative or exceeds the safe integer range.
+ * @throws {RangeError} - If the input integer is negative or exceeds the safe integer range, or does not fit in the requested byte length.
  *
  * @param i - The integer to convert.
  * @param byteLength - The desired byte length of the output array.
@@ -60,6 +60,7 @@ function bigIntToByteArray(value: bigint): Uint8Array {
 function intToBytes(i: number, byteLength: number): Uint8Array {
     if (i < 0) throw new RangeError("intToBytes only supports non-negative integers");
     if (!Number.isSafeInteger(i)) throw new RangeError("Input exceeds 53-bit safe integer range");
+    if (byteLength <= 0) throw new RangeError("byteLength must be positive");
 
     const bytes = new Uint8Array(byteLength);
     let value = BigInt(i);
@@ -68,6 +69,8 @@ function intToBytes(i: number, byteLength: number): Uint8Array {
         bytes[b] = Number(value & 0xffn);
         value >>= 8n;
     }
+
+    if (value !== 0n) throw new RangeError("Input does not fit in the requested byte length");
 
     return bytes;
 }
@@ -154,8 +157,8 @@ function framedBytesFromString(str: string, lengthPrefixBytes: number): Uint8Arr
  * @returns Uint8Array - The framed byte array.
  */
 function framedBytes(input: Uint8Array | bigint | string, lengthPrefixBytes: number = 4): Uint8Array {
-    if (input instanceof Uint8Array)  return framedBytesFromUint8Array(input, lengthPrefixBytes);
-    else if (typeof input === "bigint")  return framedBytesFromBigInt(input, lengthPrefixBytes);
+    if (input instanceof Uint8Array) return framedBytesFromUint8Array(input, lengthPrefixBytes);
+    else if (typeof input === "bigint") return framedBytesFromBigInt(input, lengthPrefixBytes);
     else return framedBytesFromString(input, lengthPrefixBytes);
 }
 

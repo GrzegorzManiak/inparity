@@ -7,7 +7,8 @@
  * @returns bigint - The positive modulus of x mod n.
  */
 function bigModPos(x: bigint, n: bigint): bigint {
-    return ((x % n) + n) % n;
+    const r = x % n;
+    return r >= 0n ? r : r + n;
 }
 
 /**
