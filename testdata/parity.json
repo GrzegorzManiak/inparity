@@ -1,0 +1,61 @@
+{
+  "numeric": {
+    "mod": [
+      { "x": "0", "n": "5", "r": "0" },
+      { "x": "1", "n": "5", "r": "1" },
+      { "x": "4", "n": "5", "r": "4" },
+      { "x": "5", "n": "5", "r": "0" },
+      { "x": "6", "n": "5", "r": "1" },
+      { "x": "-1", "n": "5", "r": "4" },
+      { "x": "-6", "n": "5", "r": "4" },
+      { "x": "-10", "n": "5", "r": "0" },
+      { "x": "1234567890123456789012345678901234567890", "n": "97", "r": "28" }
+    ],
+    "cmp": [
+      { "a": "-2", "b": "-1", "c": -1 },
+      { "a": "-1", "b": "-1", "c": 0 },
+      { "a": "-1", "b": "0", "c": -1 },
+      { "a": "0", "b": "0", "c": 0 },
+      { "a": "1", "b": "0", "c": 1 },
+      { "a": "1", "b": "2", "c": -1 },
+      { "a": "2", "b": "1", "c": 1 },
+      { "a": "123456789012345678901234567890", "b": "123456789012345678901234567891", "c": -1 }
+    ]
+  },
+  "bytes": {
+    "bytesToBigInt": [
+      { "bytes": "", "bigint": "0" },
+      { "bytes": "00", "bigint": "0" },
+      { "bytes": "01", "bigint": "1" },
+      { "bytes": "0102", "bigint": "258" }
+    ],
+    "bigIntToByteArray": [
+      { "bigint": "0", "bytes": "00" },
+      { "bigint": "1", "bytes": "01" },
+      { "bigint": "258", "bytes": "0102" },
+      { "bigint": "-1", "bytes": "", "wantErr": true }
+    ],
+    "intToBytes": [
+      { "i": 0, "len": 1, "bytes": "00" },
+      { "i": 258, "len": 2, "bytes": "0102" },
+      { "i": 256, "len": 1, "bytes": "", "wantErr": true },
+      { "i": -1, "len": 1, "bytes": "", "wantErr": true },
+      { "i": 0, "len": 0, "bytes": "", "wantErr": true }
+    ],
+    "concat": [
+      { "a": "01", "b": "0203", "out": "010203" }
+    ],
+    "framedFromBytes": [
+      { "data": "aabb", "lenBytes": 2, "frame": "0002aabb" },
+      { "data": "aabb", "lenBytes": 0, "frame": "", "wantErr": true }
+    ],
+    "framedFromBigInt": [
+      { "value": "258", "lenBytes": 1, "frame": "02000102" },
+      { "value": "-258", "lenBytes": 1, "frame": "02010102" }
+    ],
+    "framedFromString": [
+      { "str": "A", "lenBytes": 1, "frame": "0141" },
+      { "str": "A", "lenBytes": 0, "frame": "", "wantErr": true }
+    ]
+  }
+}
