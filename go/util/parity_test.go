@@ -48,6 +48,10 @@ type parityVectors struct {
 			WantErr  bool
 		}
 	}
+	Coding struct {
+		Encode []struct{ Bytes, B64 string }
+		Decode []struct{ B64, Bytes string }
+	}
 }
 
 func loadVectors(t *testing.T) parityVectors {
@@ -180,6 +184,25 @@ func TestParity_Bytes(t *testing.T) {
 		}
 		if hex.EncodeToString(fr) != tc.Frame {
 			t.Fatalf("framedFromString %s: got %x want %s", tc.Str, fr, tc.Frame)
+		}
+	}
+}
+
+func TestParity_Coding(t *testing.T) {
+	v := loadVectors(t)
+	for _, tc := range v.Coding.Encode {
+		got := EncUrlSafe(mustHex(tc.Bytes))
+		if got != tc.B64 {
+			t.Fatalf("encode %s: got %s want %s", tc.Bytes, got, tc.B64)
+		}
+	}
+	for _, tc := range v.Coding.Decode {
+		got, err := DecUrlSafe(tc.B64)
+		if err != nil {
+			t.Fatalf("decode %s: %v", tc.B64, err)
+		}
+		if hex.EncodeToString(got) != tc.Bytes {
+			t.Fatalf("decode %s: got %x want %s", tc.B64, got, tc.Bytes)
 		}
 	}
 }

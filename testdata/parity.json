@@ -57,5 +57,19 @@
       { "str": "A", "lenBytes": 1, "frame": "0141" },
       { "str": "A", "lenBytes": 0, "frame": "", "wantErr": true }
     ]
+  },
+  "coding": {
+    "encode": [
+      { "bytes": "", "b64": "" },
+      { "bytes": "68656c6c6f", "b64": "aGVsbG8" },
+      { "bytes": "0102", "b64": "AQI" },
+      { "bytes": "ffeeddccbbaa998877665544", "b64": "_-7dzLuqmYh3ZlVE" }
+    ],
+    "decode": [
+      { "b64": "", "bytes": "" },
+      { "b64": "aGVsbG8", "bytes": "68656c6c6f" },
+      { "b64": "AQI", "bytes": "0102" },
+      { "b64": "_-7dzLuqmYh3ZlVE", "bytes": "ffeeddccbbaa998877665544" }
+    ]
   }
 }

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import vectors from '../../../testdata/parity.json';
 import { bytesToBigInt, bigIntToByteArray, intToBytes, concatBytes, framedBytesFromUint8Array, framedBytesFromBigInt, framedBytesFromString } from '../../src/util/bytes';
 import {bigCmp, bigModPos} from "../../src/util/numeric";
+import { urlSafeBase64Encode, urlSafeBase64Decode } from '../../src/util/coding';
 
 function hex(buf: Uint8Array): string {
     return Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -19,7 +20,7 @@ function unhex(s: string): Uint8Array {
 // Numeric parity
 
 describe('parity: numeric', () => {
-    for (const tc of vectors.numeric.mod) {
+    for (const tc of (vectors as any).numeric.mod) {
         it(`mod x=${tc.x} n=${tc.n}`, () => {
             const x = BigInt(tc.x);
             const n = BigInt(tc.n);
@@ -27,7 +28,7 @@ describe('parity: numeric', () => {
             expect(bigModPos(x, n)).toEqual(r);
         });
     }
-    for (const tc of vectors.numeric.cmp) {
+    for (const tc of (vectors as any).numeric.cmp) {
         it(`cmp a=${tc.a} b=${tc.b}`, () => {
             const a = BigInt(tc.a);
             const b = BigInt(tc.b);
@@ -39,13 +40,13 @@ describe('parity: numeric', () => {
 // Bytes parity
 
 describe('parity: bytes', () => {
-    for (const tc of vectors.bytes.bytesToBigInt) {
+    for (const tc of (vectors as any).bytes.bytesToBigInt) {
         it(`bytesToBigInt ${tc.bytes}`, () => {
             const got = bytesToBigInt(unhex(tc.bytes));
             expect(got).toEqual(BigInt(tc.bigint));
         });
     }
-    for (const tc of vectors.bytes.bigIntToByteArray) {
+    for (const tc of (vectors as any).bytes.bigIntToByteArray) {
         it(`bigIntToByteArray ${tc.bigint}`, () => {
             if ((tc as any).wantErr) {
                 expect(() => bigIntToByteArray(BigInt(tc.bigint))).toThrowError();
@@ -55,7 +56,7 @@ describe('parity: bytes', () => {
             }
         });
     }
-    for (const tc of vectors.bytes.intToBytes) {
+    for (const tc of (vectors as any).bytes.intToBytes) {
         it(`intToBytes ${tc.i},${tc.len}`, () => {
             if ((tc as any).wantErr) {
                 expect(() => intToBytes(tc.i, tc.len)).toThrowError();
@@ -65,13 +66,13 @@ describe('parity: bytes', () => {
             }
         });
     }
-    for (const tc of vectors.bytes.concat) {
+    for (const tc of (vectors as any).bytes.concat) {
         it(`concat ${tc.a}+${tc.b}`, () => {
             const got = concatBytes(unhex(tc.a), unhex(tc.b));
             expect(hex(got)).toEqual(tc.out);
         });
     }
-    for (const tc of vectors.bytes.framedFromBytes) {
+    for (const tc of (vectors as any).bytes.framedFromBytes) {
         it(`framedFromBytes ${tc.data}`, () => {
             if ((tc as any).wantErr) {
                 expect(() => framedBytesFromUint8Array(unhex(tc.data), tc.lenBytes)).toThrowError();
@@ -81,13 +82,13 @@ describe('parity: bytes', () => {
             }
         });
     }
-    for (const tc of vectors.bytes.framedFromBigInt) {
+    for (const tc of (vectors as any).bytes.framedFromBigInt) {
         it(`framedFromBigInt ${tc.value}`, () => {
             const got = framedBytesFromBigInt(BigInt(tc.value), tc.lenBytes);
             expect(hex(got)).toEqual(tc.frame);
         });
     }
-    for (const tc of vectors.bytes.framedFromString) {
+    for (const tc of (vectors as any).bytes.framedFromString) {
         it(`framedFromString ${tc.str}`, () => {
             if ((tc as any).wantErr) {
                 expect(() => framedBytesFromString(tc.str, tc.lenBytes)).toThrowError();
@@ -99,3 +100,19 @@ describe('parity: bytes', () => {
     }
 });
 
+// Coding parity
+
+describe('parity: coding', () => {
+    for (const tc of (vectors as any).coding.encode) {
+        it(`encode ${tc.bytes}`, () => {
+            const got = urlSafeBase64Encode(unhex(tc.bytes));
+            expect(got).toEqual(tc.b64);
+        });
+    }
+    for (const tc of (vectors as any).coding.decode) {
+        it(`decode ${tc.b64}`, () => {
+            const got = urlSafeBase64Decode(tc.b64);
+            expect(hex(got)).toEqual(tc.bytes);
+        });
+    }
+});
