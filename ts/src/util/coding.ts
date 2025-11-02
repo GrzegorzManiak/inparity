@@ -1,3 +1,11 @@
+/**
+ * URL-safe base64 encoding without padding, this implementation defaults to
+ * using `btoa`/`atob` in browser environments and `Buffer` in Node.js.
+ *
+ * @param data - The input byte array to encode.
+ *
+ * @returns The URL-safe base64 encoded string.
+ */
 function encUrlSafe(data: Uint8Array): string {
     let base64: string;
 
@@ -26,6 +34,14 @@ function encUrlSafe(data: Uint8Array): string {
     return out;
 }
 
+/**
+ * URL-safe base64 decoding without padding, this implementation defaults to
+ * using `btoa`/`atob` in browser environments and `Buffer` in Node.js.
+ *
+ * @param data - The URL-safe base64 encoded string to decode.
+ *
+ * @returns The decoded byte array.
+ */
 function decUrlSafe(data: string): Uint8Array {
     // Reverse of the above, again without regex
     let base64 = '';
